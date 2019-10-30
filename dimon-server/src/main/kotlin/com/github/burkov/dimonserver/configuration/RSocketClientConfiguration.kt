@@ -10,15 +10,28 @@ import io.rsocket.RSocket
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Lazy
+import sun.print.CUPSPrinter.getServer
+import org.springframework.boot.autoconfigure.rsocket.RSocketProperties
+import reactor.core.publisher.Mono
+import org.springframework.boot.web.server.LocalServerPort
+import java.net.URI
+
+
+
 
 @Configuration
 class ClientConfiguration {
+    @LocalServerPort
+    private val port: Int = 8080
     @Bean
     @Lazy
-    fun rSocketRequester(rSocketStrategies: RSocketStrategies): RSocketRequester {
+    fun rSocketRequester(rSocketStrategies: RSocketStrategies, rSocketProps: RSocketProperties): Mono<RSocketRequester> {
         return RSocketRequester.builder()
                 .rsocketStrategies(rSocketStrategies)
-                .connectTcp("localhost", 7000)
-                .block()!!
+                .connectWebSocket(getURI(rSocketProps))
+    }
+
+    private fun getURI(rSocketProps: RSocketProperties): URI {
+        return URI.create(String.format("ws://localhost:%d%s", port, rSocketProps.server.mappingPath))
     }
 }

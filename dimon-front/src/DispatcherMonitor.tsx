@@ -1,6 +1,13 @@
 import React, { Component } from 'react';
 import './DispatcherMonitor.css';
 
+import RSocketWebSocketClient from 'rsocket-websocket-client';
+import {
+  RSocketClient,
+  JsonSerializers,
+  Utf8Encoders
+} from 'rsocket-core';
+
 
 type DispatcherMonitorState = {
   dataFromServer: Object
@@ -16,14 +23,30 @@ export default class DispatcherMonitor extends Component<{}, DispatcherMonitorSt
     this.state = { dataFromServer: {} }
   }
 
-  componentDidMount() {
-    const ws = new WebSocket('ws://demos.kaazing.com/echo');
-    ws.addEventListener('message', event => {
-      this.setState({ dataFromServer: JSON.parse(event.data) });
+  async componentDidMount() {
+    const client = new RSocketClient({
+      serializers: JsonSerializers,
+      setup: {
+        keepAlive: 60000,
+        lifetime: 180000,
+        dataMimeType: 'application/json',
+        metadataMimeType: 'application/json',
+      },
+      transport: new RSocketWebSocketClient({
+        url: 'ws://localhost:8080/rsocket',
+        debug: true,
+      }, Utf8Encoders),
     });
-    ws.addEventListener('open', event => {
-      ws.send('{"str": "hello world" }');
-    })
+    const socket = await client.connect();
+
+    console.log(`done await`);
+    // const ws = new WebSocket('ws://demos.kaazing.com/echo');
+    // ws.addEventListener('message', event => {
+    //   this.setState({ dataFromServer: JSON.parse(event.data) });
+    // });
+    // ws.addEventListener('open', event => {
+    //   ws.send('{"str": "hello world" }');
+    // })
   }
 
   render() {

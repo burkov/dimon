@@ -1,11 +1,11 @@
-package com.github.burkov.dpmonserver.controller
+package com.github.burkov.dimonserver.controller
 
-import com.github.burkov.dpmonserver.model.Job
-import com.github.burkov.dpmonserver.protobuf.GreeterGrpc
-import com.github.burkov.dpmonserver.protobuf.Hello
-import com.github.burkov.dpmonserver.protobuf.Hello.HelloRequest
-import com.github.burkov.dpmonserver.repository.JobsRepository
-import com.github.burkov.dpmonserver.service.GrpcClientService
+import com.github.burkov.dimonserver.model.Job
+import com.github.burkov.dimonserver.protobuf.GreeterGrpc
+import com.github.burkov.dimonserver.protobuf.Hello
+import com.github.burkov.dimonserver.protobuf.Hello.HelloRequest
+import com.github.burkov.dimonserver.repository.JobsRepository
+import com.github.burkov.dimonserver.service.GrpcClientService
 import io.grpc.stub.StreamObserver
 import net.devh.boot.grpc.server.service.GrpcService
 import org.springframework.web.bind.annotation.GetMapping

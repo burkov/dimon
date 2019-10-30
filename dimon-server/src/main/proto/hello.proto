@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option java_package = "com.github.burkov.dpmonserver.protobuf";
+option java_package = "com.github.burkov.dimonserver.protobuf";
 
 message HelloRequest {
     string name = 1;

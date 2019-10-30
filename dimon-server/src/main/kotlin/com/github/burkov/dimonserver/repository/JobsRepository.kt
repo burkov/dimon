@@ -1,6 +1,6 @@
-package com.github.burkov.dpmonserver.repository
+package com.github.burkov.dimonserver.repository
 
-import com.github.burkov.dpmonserver.model.Job
+import com.github.burkov.dimonserver.model.Job
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository

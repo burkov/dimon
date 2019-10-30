@@ -1,10 +1,8 @@
-package com.github.burkov.dpmonserver
+package com.github.burkov.dimonserver
 
-import com.github.burkov.dpmonserver.protobuf.GreeterGrpc
-import net.devh.boot.grpc.client.inject.GrpcClient
+import com.github.burkov.dimonserver.protobuf.GreeterGrpc
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
-import kotlin.concurrent.thread
 
 @SpringBootApplication
 class DpmonServerApplication

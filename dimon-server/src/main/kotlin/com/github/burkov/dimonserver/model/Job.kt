@@ -1,4 +1,4 @@
-package com.github.burkov.dpmonserver.model
+package com.github.burkov.dimonserver.model
 
 import java.time.LocalDateTime
 import javax.persistence.Entity

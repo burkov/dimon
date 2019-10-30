@@ -1,1 +1,0 @@
-rootProject.name = "dpmon-server"

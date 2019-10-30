@@ -1,8 +1,8 @@
-package com.github.burkov.dpmonserver.service
+package com.github.burkov.dimonserver.service
 
-import com.github.burkov.dpmonserver.protobuf.GreeterGrpc
+import com.github.burkov.dimonserver.protobuf.GreeterGrpc
 import io.grpc.StatusRuntimeException
-import com.github.burkov.dpmonserver.protobuf.Hello.HelloRequest
+import com.github.burkov.dimonserver.protobuf.Hello.HelloRequest
 import net.devh.boot.grpc.client.inject.GrpcClient
 import org.springframework.stereotype.Service
 

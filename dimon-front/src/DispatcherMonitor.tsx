@@ -40,13 +40,6 @@ export default class DispatcherMonitor extends Component<{}, DispatcherMonitorSt
     const socket = await client.connect();
 
     console.log(`done await`);
-    // const ws = new WebSocket('ws://demos.kaazing.com/echo');
-    // ws.addEventListener('message', event => {
-    //   this.setState({ dataFromServer: JSON.parse(event.data) });
-    // });
-    // ws.addEventListener('open', event => {
-    //   ws.send('{"str": "hello world" }');
-    // })
   }
 
   render() {

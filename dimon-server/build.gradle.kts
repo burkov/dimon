@@ -12,7 +12,7 @@ plugins {
 
 group = "com.github.burkov"
 version = "0.0.1-SNAPSHOT"
-java.sourceCompatibility = JavaVersion.VERSION_1_8
+java.sourceCompatibility = JavaVersion.VERSION_12
 
 repositories {
     mavenCentral()
@@ -22,7 +22,6 @@ repositories {
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-devtools")
-//    implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("org.springframework.boot:spring-boot-starter-rsocket")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")

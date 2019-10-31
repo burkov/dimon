@@ -37,7 +37,6 @@ import java.lang.Exception
 class HelloWorldRSocketController {
     @MessageMapping("hello")
     fun sayHello(): Flux<String> {
-        throw Exception("kek")
         return Flux.just("Hello RSocket")
     }
 }

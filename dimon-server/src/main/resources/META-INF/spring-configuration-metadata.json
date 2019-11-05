@@ -6,11 +6,6 @@
       "description": "LFS client endpoint."
     },
     {
-      "name": "dimon.lfs.port",
-      "type": "java.lang.String",
-      "description": "LFS client port."
-    },
-    {
       "name": "dimon.lfs.login",
       "type": "java.lang.String",
       "description": "LFS client login."
@@ -19,6 +14,11 @@
       "name": "dimon.lfs.password",
       "type": "java.lang.String",
       "description": "LFS client password."
+    },
+    {
+      "name": "dimon.lfs.port",
+      "type": "java.lang.Integer",
+      "description": "LFS client port."
     }
   ]
 }

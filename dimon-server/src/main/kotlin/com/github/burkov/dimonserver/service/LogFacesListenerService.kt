@@ -2,6 +2,7 @@ package com.github.burkov.dimonserver.service
 
 import com.moonlit.logfaces.api.LogFacesView
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import javax.annotation.PostConstruct
 
@@ -9,6 +10,9 @@ import javax.annotation.PostConstruct
 class LogFacesListenerService {
     private val log = LoggerFactory.getLogger(LogFacesListenerService::class.java)
     private lateinit var warnsView: LogFacesView
+
+    @Value("\${dimon.lfs.login}")
+    private lateinit var login: String
 
     @PostConstruct
     fun postConstruct() {
@@ -26,7 +30,7 @@ class LogFacesListenerService {
 
     private fun reconnect() {
         disconnect()
-        log.info("Connecting")
+        log.info("Connecting $login")
 //        currentConnection = LogFacesAPI.openConnection(
 //                AppConfig.LFS.Connection.url,
 //                AppConfig.LFS.Connection.port,

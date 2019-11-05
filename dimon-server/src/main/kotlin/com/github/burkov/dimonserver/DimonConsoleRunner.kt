@@ -9,10 +9,10 @@ import org.springframework.stereotype.Component
 class DimonConsoleRunner(val tablePollingService: JobsTablePollingService) : CommandLineRunner {
     private val log = LoggerFactory.getLogger(DimonConsoleRunner::class.java)
     override fun run(vararg args: String?) {
-        log.info("Event stream subscriber test")
-        tablePollingService.jobEventsStream(false).subscribe { event ->
-            log.info("Event: ${event.type} $event")
-        }
-        log.info("Done")
+//        log.info("Event stream subscriber test")
+//        tablePollingService.jobEventsStream(false).subscribe { event ->
+//            log.info("Event: ${event.type} $event")
+//        }
+//        log.info("Done")
     }
 }

@@ -1,99 +1,66 @@
 package com.github.burkov.dimonserver.service
 
+import com.moonlit.logfaces.api.LogFacesAPI
 import com.moonlit.logfaces.api.LogFacesView
+import com.moonlit.logfaces.server.core.LogEvent
+import com.moonlit.logfaces.server.core.Order
+import com.moonlit.logfaces.server.criteria.EventAttribute
+import com.moonlit.logfaces.server.criteria.Operation
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import javax.annotation.PostConstruct
 
 @Service
-class LogFacesListenerService {
+class LogFacesListenerService(val params: LogFacesClientParams) {
     private val log = LoggerFactory.getLogger(LogFacesListenerService::class.java)
     private lateinit var warnsView: LogFacesView
 
-    @Value("\${dimon.lfs.login}")
-    private lateinit var login: String
 
     @PostConstruct
     fun postConstruct() {
         reconnect()
-
     }
 
     private fun disconnect() {
-        log.info("Disconnecting")
-        //        warnsView?.deactivate()
-//        dispatcherStateView?.deactivate()
-//        Thread.sleep(500)
-//        LogFacesAPI.closeConnection()
+        if (::warnsView.isInitialized) {
+            log.info("Disconnecting")
+            warnsView.deactivate()
+            Thread.sleep(500)
+            LogFacesAPI.closeConnection()
+        }
     }
 
     private fun reconnect() {
         disconnect()
-        log.info("Connecting $login")
-//        currentConnection = LogFacesAPI.openConnection(
-//                AppConfig.LFS.Connection.url,
-//                AppConfig.LFS.Connection.port,
-//                true,
-//                AppConfig.LFS.Connection.login,
-//                AppConfig.LFS.Connection.password)
+        log.info("Connecting to ${params.url}")
+        val currentConnection = LogFacesAPI.openConnection(
+                params.url,
+                params.port,
+                true,
+                params.login,
+                params.password)
+        requireNotNull(currentConnection) { "LogFacesAPI.openConnection(..) returned null-pointer" }
+        val warnsFilter = LogFacesAPI.makeCriteria().apply {
+            addRule()
+                    .addCondition(EventAttribute.loggerLevel, Operation.emore, "INFO")
+                    .addCondition(EventAttribute.domainName, Operation.`is`, "jetprofile.prod.ecs")
+            //                        .addCondition(EventAttribute.loggerName, Operation.`is`, "JobHealth")
+        }
+//        val warnsQuery = currentConnection.createQuery("waeQuery").apply {
+//            setCriteria(warnsFilter)
+//            setMaxSize(5)
+//            setOrder(Order.DESCENDING)
+//        }
+//        warnsQuery.results.forEach {
+//            println(it.message)
+//        }
+//        warnsView = currentConnection.createView("waeView").apply {
+//            criteriaFilter = warnsFilter
+//            addListener { logEvent ->
+//                log.info(logEvent.message.toString())
+//            }
+//            activate()
+//        }
 
     }
 }
-//class LfsLogProvider : LogProvider() {
-//    init {
-//        enableWatchdog()
-//    }
-//    override fun reconnect() {
-//        logger.info("Initializing connection to log provider")
-
-//        requireNotNull(currentConnection) { "LogFacesAPI.openConnection(..) returned null-pointer" }
-//        val warnsFilter = LogFacesAPI.makeCriteria().apply {
-//            addRule()
-//                    .addCondition(EventAttribute.loggerLevel, Operation.emore, AppConfig.LFS.Filter.logLevel)
-//                    .addCondition(EventAttribute.domainName, Operation.`is`, AppConfig.LFS.Filter.domain)
-//        }
-//        val warnsQuery = currentConnection!!.createQuery("waeQuery").apply {
-//            setCriteria(warnsFilter)
-//            setMaxSize(AppConfig.keepLastNLogLines)
-//            setOrder(Order.DESCENDING)
-//        }
-//        putAllLogEvents(warnsQuery.results.map { le ->
-//            LogEvent.fromLog4jLoggingEvent(le)
-//        })
-//
-//        activateWarnsView(warnsFilter)
-////        activateDispatcherStateView()
-//        logger.info("Log provider connected")
-//    }
-//
-//    private fun activateDispatcherStateView() {
-//        dispatcherStateView = currentConnection!!.createView("dispatcherState").apply {
-//            criteriaFilter = LogFacesAPI.makeCriteria().apply {
-//                addRule().addCondition(EventAttribute.loggerLevel, Operation.`is`, LogLevel.INFO.name)
-//                        .addCondition(EventAttribute.domainName, Operation.`is`, AppConfig.LFS.Filter.domain)
-//                        .addCondition(EventAttribute.loggerName, Operation.`is`, "JobHealth")
-//            }
-//            addListener { le ->
-//                val msg = LogEvent.fromLog4jLoggingEvent(le).message
-//                when {
-//                    msg.startsWith("failed_jobs: ") -> DispatcherStats.reportFailedJobs(msg)
-//                    msg.startsWith("pending_jobs: ") -> DispatcherStats.reportPendingJobs(msg)
-//                }
-//            }
-//            activate()
-//        }
-//    }
-//
-//    private fun activateWarnsView(warnsFilter: CriteriaFilter) {
-//        warnsView = currentConnection!!.createView("waeView").apply {
-//            criteriaFilter = warnsFilter
-//            addListener { le ->
-//                putLogEvent(LogEvent.fromLog4jLoggingEvent(le))
-//            }
-//            activate()
-//        }
-//    }
-//
-
-//}%

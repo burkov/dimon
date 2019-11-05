@@ -20,16 +20,6 @@ repositories {
 }
 
 dependencies {
-    implementation(files(
-           "lib/commons-jexl-2.0.1.jar",
-           "lib/commons-lang-2.5.jar",
-           "lib/commons-logging.jar",
-           "lib/gson-2.2.2.jar",
-           "lib/hessian.4.0.60b.jar",
-           "lib/lfs-api-4.6.0.jar"
-//           "lib/log4j-1.2.15.jar"
-    ))
-
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-devtools")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
@@ -38,6 +28,19 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     runtimeOnly("mysql:mysql-connector-java")
+
+
+    // LFS dependencies
+    implementation(files(
+            "lib/lfs-api-4.6.0.jar",
+            "lib/hessian.4.0.60b.jar", // either 60 nor 61 version works, guess 60b is patched version
+            "lib/log4j-1.2.15.jar"
+    ))
+    implementation("org.apache.commons:commons-jexl:2.0.1")
+    implementation("commons-lang:commons-lang:2.5")
+    implementation("commons-logging:commons-logging:1.0.4")
+    implementation("com.google.code.gson:gson:2.8.2") // LFS wants 2.2.2 but it is not working with spring boot
+
 
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude(group = "org.junit.vintage", module = "junit-vintage-engine")

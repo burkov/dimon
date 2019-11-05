@@ -1,0 +1,7 @@
+#!/bin/sh
+
+echo "Encrypting files."
+git secret hide
+git add .gitsecret/paths/mapping.cfg
+git add *.secret
+echo "Done encrypting files."

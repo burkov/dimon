@@ -20,7 +20,7 @@ class JobsTablePollingService(val jobsRepository: JobsRepository) {
     /**
      * @param sendSnapshot true if snapshot should be sent to subscriber
      */
-    fun subscribe(sendSnapshot: Boolean): Flux<JobEvent> {
+    fun jobEventsStream(sendSnapshot: Boolean): Flux<JobEvent> {
         log.info("+1 Subscriber, total: ${subscribers.size + 1}")
         return Flux.create<JobEvent> { sink ->
             subscribers.add(ServiceSubscriber(sink, !sendSnapshot))
@@ -53,7 +53,7 @@ class JobsTablePollingService(val jobsRepository: JobsRepository) {
                 }
                 else -> difference.forEach { subscriber.sink.next(it) }
             }
-            if (!subscriber.sink.isCancelled) subscriber.sink.next(JobEventTablePoll(timestamp = LocalDateTime.now()))
+//            if (!subscriber.sink.isCancelled) subscriber.sink.next(JobEventTablePoll(timestamp = LocalDateTime.now()))
         }
     }
 

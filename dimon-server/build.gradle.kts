@@ -20,6 +20,16 @@ repositories {
 }
 
 dependencies {
+    implementation(files(
+           "lib/commons-jexl-2.0.1.jar",
+           "lib/commons-lang-2.5.jar",
+           "lib/commons-logging.jar",
+           "lib/gson-2.2.2.jar",
+           "lib/hessian.4.0.60b.jar",
+           "lib/lfs-api-4.6.0.jar"
+//           "lib/log4j-1.2.15.jar"
+    ))
+
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-devtools")
     implementation("org.springframework.boot:spring-boot-starter-webflux")

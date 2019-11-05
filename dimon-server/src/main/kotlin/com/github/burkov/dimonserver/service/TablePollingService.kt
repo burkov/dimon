@@ -2,15 +2,16 @@ package com.github.burkov.dimonserver.service
 
 import com.github.burkov.dimonserver.model.*
 import com.github.burkov.dimonserver.repository.JobsRepository
+import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Flux
 import reactor.core.publisher.FluxSink
-import java.util.concurrent.ConcurrentHashMap
+import java.time.LocalDateTime
+import java.util.concurrent.ConcurrentLinkedQueue
 
-private data class TablePollingServiceSubscriber(
-        val emitter: FluxSink<JobEvent>,
-//        val flux: Flux<JobEvent>,
+private data class ServiceSubscriber(
+        val sink: FluxSink<JobEvent>,
         var snapshotSent: Boolean
 )
 
@@ -20,38 +21,43 @@ class JobsTablePollingService(val jobsRepository: JobsRepository) {
      * @param sendSnapshot true if snapshot should be sent to subscriber
      */
     fun subscribe(sendSnapshot: Boolean): Flux<JobEvent> {
-        return Flux.create<JobEvent> { emitter ->
-            subscribers[emitter] = TablePollingServiceSubscriber(emitter, !sendSnapshot)
+        log.info("+1 Subscriber, total: ${subscribers.size + 1}")
+        return Flux.create<JobEvent> { sink ->
+            subscribers.add(ServiceSubscriber(sink, !sendSnapshot))
         }
     }
 
-//    fun unsubscribe(flux: Flux<JobEvent>) {
-//        val subscriberData = subscribers[flux]
-//        requireNotNull(subscriberData)
-//        subscriberData.emitter.complete()
-//        subscribers.remove(flux)
-//    }
-
-    private val subscribers = ConcurrentHashMap<FluxSink<JobEvent>, TablePollingServiceSubscriber>()
+    private val log = LoggerFactory.getLogger(JobsTablePollingService::class.java)
+    private val subscribers = ConcurrentLinkedQueue<ServiceSubscriber>()
     private val jobs = mutableListOf<Job>()
 
     @Scheduled(fixedDelay = 1000)
     private fun pollTable() {
-        if (subscribers.size == 0) return
+        if (subscribers.size == 0) {
+            jobs.clear()
+            return
+        }
         val prevState = jobs.toList()
         jobs.clear()
-        jobs.addAll(jobsRepository.findAll())
-        val difference = difference(prevState, jobs)
-        subscribers.values.forEach { subscriber ->
-            val emitter = subscriber.emitter
-            if (!subscriber.snapshotSent) {
-                emitter.next(JobEventSnapshot(jobs))
-                subscriber.snapshotSent = true
-            } else difference.forEach { emitter.next(it) }
+        jobs.addAll(jobsRepository.findAllByDueToBeforeOrderByDueToDesc())
+        val difference = stateDifference(prevState, jobs)
+        for (subscriber in subscribers) {
+            when {
+                subscriber.sink.isCancelled -> {
+                    log.info("Subscription was cancelled")
+                    subscribers.remove(subscriber)
+                }
+                !subscriber.snapshotSent -> {
+                    subscriber.sink.next(JobEventSnapshot(jobs.map { it.toDTO() }))
+                    subscriber.snapshotSent = true
+                }
+                else -> difference.forEach { subscriber.sink.next(it) }
+            }
+            if (!subscriber.sink.isCancelled) subscriber.sink.next(JobEventTablePoll(timestamp = LocalDateTime.now()))
         }
     }
 
-    private fun difference(prevState: List<Job>, currState: List<Job>): List<JobEvent> {
+    private fun stateDifference(prevState: List<Job>, currState: List<Job>): List<JobEvent> {
         val prevMap = prevState.associateBy { it.id }
         val currMap = currState.associateBy { it.id }
         val prevIds = prevMap.keys
@@ -64,8 +70,8 @@ class JobsTablePollingService(val jobsRepository: JobsRepository) {
                 .values
         return listOf(
                 deleted.map { JobEventDelete(jobId = it) },
-                new.map { JobEventInsert(currMap.getValue(it)) },
-                updated.map { JobEventUpdate(it) }
-        ).flatten()
+                new.map { JobEventInsert(currMap.getValue(it).toDTO()) },
+                updated.map { JobEventUpdate(it.toDTO()) }
+        ).flatten().also { println("diff ${it.size}, deleted: ${deleted.size}, new: ${new.size}, updated: ${updated.size}") }
     }
 }

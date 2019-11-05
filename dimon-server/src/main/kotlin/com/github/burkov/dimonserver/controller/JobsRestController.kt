@@ -26,6 +26,6 @@ class JobsRestController(val jobsRepository: JobsRepository) {
 class JobsRSocketController(val jobsTablePollingService: JobsTablePollingService) {
     @MessageMapping("jobs-stream")
     fun jobsStream(): Flux<JobEvent> {
-        return jobsTablePollingService.subscribe(false)
+        return jobsTablePollingService.subscribe(true)
     }
 }

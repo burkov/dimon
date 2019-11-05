@@ -15,3 +15,13 @@ data class Job(
         val context: String = "",
         val jobHash: String = ""
 )
+
+fun Job.toDTO() = JobDTO(id, workerId, params, dueTo, retry_count)
+
+data class JobDTO(
+        val id: Long,
+        val workerId: String,
+        val params: String,
+        val dueTo: LocalDateTime,
+        val retry_count: Int
+)

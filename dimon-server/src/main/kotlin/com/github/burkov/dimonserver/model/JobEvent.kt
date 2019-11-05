@@ -1,5 +1,7 @@
 package com.github.burkov.dimonserver.model
 
+import java.time.LocalDateTime
+
 
 abstract class JobEvent {
     private val childClassName = this::class.java.simpleName!!
@@ -14,7 +16,8 @@ abstract class JobEvent {
     val type: String = childClassName.removePrefix(JobEvent::class.simpleName!!).toLowerCase()
 }
 
-data class JobEventInsert(val job: Job) : JobEvent()
+data class JobEventInsert(val job: JobDTO) : JobEvent()
 data class JobEventDelete(val jobId: Long) : JobEvent()
-data class JobEventUpdate(val job: Job) : JobEvent()
-data class JobEventSnapshot(val jobs: List<Job>) : JobEvent()
+data class JobEventUpdate(val job: JobDTO) : JobEvent()
+data class JobEventSnapshot(val jobs: List<JobDTO>) : JobEvent()
+data class JobEventTablePoll(val timestamp: LocalDateTime): JobEvent()

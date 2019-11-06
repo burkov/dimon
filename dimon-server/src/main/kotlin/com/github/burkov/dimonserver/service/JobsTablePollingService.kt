@@ -3,59 +3,75 @@ package com.github.burkov.dimonserver.service
 import com.github.burkov.dimonserver.model.*
 import com.github.burkov.dimonserver.repository.JobsRepository
 import org.slf4j.LoggerFactory
-import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
+import reactor.core.publisher.DirectProcessor
 import reactor.core.publisher.Flux
-import reactor.core.publisher.FluxSink
-import java.time.LocalDateTime
-import java.util.concurrent.ConcurrentLinkedQueue
-
-private data class ServiceSubscriber(
-        val sink: FluxSink<JobEvent>,
-        var snapshotSent: Boolean
-)
+import java.time.Duration
+import javax.annotation.PostConstruct
 
 @Service
 class JobsTablePollingService(val jobsRepository: JobsRepository) {
-    /**
-     * @param sendSnapshot true if snapshot should be sent to subscriber
-     */
-    fun jobEventsStream(sendSnapshot: Boolean): Flux<JobEvent> {
-        log.info("+1 Subscriber, total: ${subscribers.size + 1}")
-        return Flux.create<JobEvent> { sink ->
-            subscribers.add(ServiceSubscriber(sink, !sendSnapshot))
-        }
-    }
+    private val processor: DirectProcessor<JobEvent> = DirectProcessor.create()
+    val stream: Flux<JobEvent> = Flux.from(processor)
 
     private val log = LoggerFactory.getLogger(JobsTablePollingService::class.java)
-    private val subscribers = ConcurrentLinkedQueue<ServiceSubscriber>()
     private val jobs = mutableListOf<Job>()
 
-    @Scheduled(fixedDelay = 1000)
-    private fun pollTable() {
-        if (subscribers.size == 0) {
-            jobs.clear()
-            return
-        }
-        val prevState = jobs.toList()
-        jobs.clear()
-        jobs.addAll(jobsRepository.findAllByDueToBeforeOrderByDueToDesc())
-        val difference = stateDifference(prevState, jobs)
-        for (subscriber in subscribers) {
-            when {
-                subscriber.sink.isCancelled -> {
-                    log.info("Subscription was cancelled")
-                    subscribers.remove(subscriber)
-                }
-                !subscriber.snapshotSent -> {
-                    subscriber.sink.next(JobEventSnapshot(jobs.map { it.toDTO() }))
-                    subscriber.snapshotSent = true
-                }
-                else -> difference.forEach { subscriber.sink.next(it) }
+    fun refine(jobPartialData: JobPartialData): JobDTO? {
+        infix fun List<Job>.takeIfExactlyOneOrElse(additionalLookup: () -> Job?): Job? = when {
+            this.size == 1 -> this.single()
+            this.size > 1 -> {
+                log.warn("More than one job found by $jobPartialData")
+                null
             }
-//            if (!subscriber.sink.isCancelled) subscriber.sink.next(JobEventTablePoll(timestamp = LocalDateTime.now()))
+            else -> additionalLookup()
         }
+
+        return synchronized(jobs) {
+            val foundInCache = jobs.filter { jobPartialData.equalsToJob(it) }
+            foundInCache takeIfExactlyOneOrElse {
+                log.info("Cache miss, looking up in DB")
+                val foundInDb = jobsRepository.findByWorkerIdAndParams(jobPartialData.workerId, jobPartialData.params)
+                foundInDb takeIfExactlyOneOrElse {
+                    log.warn("Was not able to find Job by $jobPartialData neither in cache nor in DB")
+                    null
+                }
+            }
+        }?.toDTO()
     }
+
+    @PostConstruct
+    private fun postConstruct() {
+        Flux.interval(Duration.ofMillis(1000))
+                .subscribe {
+                    log.info(Thread.currentThread().name)
+                    synchronized(jobs) {
+                        // update cache
+                    }
+                }
+    }
+
+//    @Scheduled(fixedDelay = 1000)
+//    private fun pollTable() {
+//        val prevState = jobs.toList()
+//        jobs.clear()
+//        jobs.addAll(jobsRepository.findAllByDueToBeforeOrderByDueToDesc())
+//        val difference = stateDifference(prevState, jobs)
+//        for (subscriber in subscribers) {
+//            when {
+//                subscriber.sink.isCancelled -> {
+//                    log.info("Subscription was cancelled")
+//                    subscribers.remove(subscriber)
+//                }
+//                !subscriber.snapshotSent -> {
+//                    subscriber.sink.next(JobEventSnapshot(jobs.map { it.toDTO() }))
+//                    subscriber.snapshotSent = true
+//                }
+//                else -> difference.forEach { subscriber.sink.next(it) }
+//            }
+////            if (!subscriber.sink.isCancelled) subscriber.sink.next(JobEventTablePoll(timestamp = LocalDateTime.now()))
+//        }
+//    }
 
     private fun stateDifference(prevState: List<Job>, currState: List<Job>): List<JobEvent> {
         val prevMap = prevState.associateBy { it.id }

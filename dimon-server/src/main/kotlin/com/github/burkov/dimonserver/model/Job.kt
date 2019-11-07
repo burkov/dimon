@@ -1,8 +1,9 @@
 package com.github.burkov.dimonserver.model
 
-import java.math.BigInteger
 import java.time.LocalDateTime
-import javax.persistence.*
+import javax.persistence.Column
+import javax.persistence.Entity
+import javax.persistence.Id
 
 @Entity(name = "Jobs")
 data class Job(

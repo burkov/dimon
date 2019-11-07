@@ -1,6 +1,5 @@
 package com.github.burkov.dimonserver
 
-import com.github.burkov.dimonserver.service.JobsTablePollingService
 import com.github.burkov.dimonserver.service.LogFacesListenerService
 import org.slf4j.LoggerFactory
 import org.springframework.boot.CommandLineRunner

@@ -1,6 +1,6 @@
 package com.github.burkov.dimonserver.service
 
-import com.github.burkov.dimonserver.model.*
+import com.github.burkov.dimonserver.model.Job
 import com.github.burkov.dimonserver.repository.JobsRepository
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service

@@ -1,13 +1,11 @@
 package com.github.burkov.dimonserver.service
 
 import com.github.burkov.dimonserver.model.*
-import com.github.burkov.dimonserver.repository.JobsRepository
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import reactor.core.publisher.DirectProcessor
 import reactor.core.publisher.Flux
 import java.time.Duration
-import java.util.concurrent.ConcurrentHashMap
 import javax.annotation.PostConstruct
 
 @Service

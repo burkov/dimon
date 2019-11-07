@@ -10,8 +10,8 @@ import org.springframework.stereotype.Component
 class DimonConsoleRunner(val logFacesListenerService: LogFacesListenerService) : CommandLineRunner {
     private val log = LoggerFactory.getLogger(DimonConsoleRunner::class.java)
     override fun run(vararg args: String?) {
-//        logFacesListenerService.stream.subscribe { ev ->
-//            println(ev)
-//        }
+        logFacesListenerService.stream.subscribe { ev ->
+            log.info(ev.toString())
+        }
     }
 }

@@ -25,11 +25,3 @@ data class JobDTO(
         val dueTo: LocalDateTime,
         val retry_count: Int
 )
-
-data class JobPartialData(
-        val workerId: String,
-        val params: String,
-        val retry_count: Int
-) {
-    fun equalsToJob(job: Job): Boolean = workerId == job.workerId && params == job.params
-}

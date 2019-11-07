@@ -13,6 +13,7 @@ abstract class JobEvent {
         }
     }
 
+    @Suppress("unused")
     val type: String = childClassName.removePrefix(JobEvent::class.simpleName!!).toLowerCase()
 }
 

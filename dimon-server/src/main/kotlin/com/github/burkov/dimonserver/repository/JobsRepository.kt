@@ -13,6 +13,4 @@ interface JobsRepository : JpaRepository<Job, Long> {
     fun listDistinctContexts(): Set<String>
 
     fun findAllByDueToBeforeOrderByDueToDesc(dueTo: LocalDateTime = LocalDateTime.now().plusHours(1)): List<Job>
-
-    fun findByWorkerIdAndParams(workerId: String, params: String): List<Job>
 }

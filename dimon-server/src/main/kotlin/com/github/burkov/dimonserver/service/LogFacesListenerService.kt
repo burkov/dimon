@@ -46,6 +46,12 @@ class LogFacesListenerService(val params: LogFacesClientParams,
         }
     }
 
+    private fun removeFromRunningJobsList(jobDto: JobDTO) {
+        synchronized(runningJobs) {
+            runningJobs.removeIf { it.id == jobDto.id }
+        }
+    }
+
     private fun disconnect() {
         if (::warnsView.isInitialized) {
             log.info("Disconnecting")
@@ -76,13 +82,23 @@ class LogFacesListenerService(val params: LogFacesClientParams,
         }
     }
 
+    private enum class LogEventType(val pattern: String) {
+        JobStarted("Executing JOB="),
+        JobCompleted("Finishing JOB=")
+    }
+
+    private fun String.detectLogEventType(): LogEventType? = LogEventType.values().firstOrNull {
+        this.contains(it.pattern)
+    }
+
     private fun LoggingEvent.toJobEvents(): JobEvent? {
         val message = this.message.toString()
+        val type = message.detectLogEventType() ?: return null
 
-        fun parseWorkerId(): String = message.substringAfter("JOB=").substringBefore(", ")
-        fun parseParams(): String = message.substringAfter("params=").substringBefore(", ")
-        fun parseRetryCount(): Int = message.substringAfter("retryCount=").substringBefore(", ").toIntOrNull() ?: -1
-        fun parseId(): Long = message.substringAfter("id=").toLongOrNull() ?: -1L
+        fun parseWorkerId(): String = message.substringAfter(" JOB=").substringBefore(", ")
+        fun parseParams(): String = message.substringAfter(" params=").substringBefore(", ")
+        fun parseRetryCount(): Int = message.substringAfter(" retryCount=").substringBefore(", ").toIntOrNull() ?: -1
+        fun parseId(): Long = message.substringAfter(" id=").toLongOrNull() ?: -1L
 
         val id = parseId()
         if (id == -1L) {
@@ -95,20 +111,23 @@ class LogFacesListenerService(val params: LogFacesClientParams,
             null
         }
 
+        val dto = job?.toDTO()
         return when {
-            job == null -> JobEventCompletedInstantly(JobDTO(
+            dto == null -> JobEventCompletedInstantly(JobDTO(
                     id = id,
                     workerId = parseWorkerId(),
                     params = parseParams(),
                     retry_count = parseRetryCount(),
                     dueTo = LocalDateTime.now()
             ))
-            message.contains("Executing JOB=") -> {
-                val dto = job.toDTO()
+            type == LogEventType.JobStarted -> {
                 addToRunningJobsList(dto)
                 JobEventStarted(dto)
             }
-            message.contains("Finishing JOB=") -> JobEventCompleted(job.toDTO())
+            type == LogEventType.JobCompleted -> {
+                removeFromRunningJobsList(dto)
+                JobEventCompleted(dto)
+            }
             else -> null
         }
     }

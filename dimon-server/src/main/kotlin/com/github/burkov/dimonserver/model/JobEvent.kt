@@ -17,11 +17,14 @@ abstract class JobEvent {
     val type: String = childClassName.removePrefix(JobEvent::class.simpleName!!).toLowerCase()
 }
 
-data class JobEventInsert(val job: JobDTO) : JobEvent()
+abstract class JobEventWithDto : JobEvent() {
+    abstract val job: JobDTO
+}
+
+data class JobEventInsert(override val job: JobDTO) : JobEventWithDto()
 data class JobEventDelete(val jobId: Long) : JobEvent()
-data class JobEventUpdate(val job: JobDTO) : JobEvent()
-data class JobEventSnapshot(val jobs: List<JobDTO>) : JobEvent()
+data class JobEventUpdate(override val job: JobDTO) : JobEventWithDto()
 data class JobEventPing(val timestamp: LocalDateTime = LocalDateTime.now()) : JobEvent()
-data class JobEventStarted(val job: JobDTO) : JobEvent()
-data class JobEventCompleted(val job: JobDTO) : JobEvent()
-data class JobEventCompletedInstantly(val job: JobDTO) : JobEvent()
+data class JobEventStarted(override val job: JobDTO) : JobEventWithDto()
+data class JobEventCompleted(override val job: JobDTO) : JobEventWithDto()
+data class JobEventCompletedInstantly(override val job: JobDTO) : JobEventWithDto()

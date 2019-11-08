@@ -19,6 +19,16 @@
       "name": "dimon.lfs.port",
       "type": "java.lang.Integer",
       "description": "LFS client port."
+    },
+    {
+      "name": "dimon.stateRefreshIntervalMs",
+      "type": "java.lang.Long",
+      "description": "Interval of table rescan to detect job completion."
+    },
+    {
+      "name": "dimon.lfs.watchdogIntervalMs",
+      "type": "java.lang.Long",
+      "description": "Interval of checking that LFS client is not dead."
     }
   ]
 }

@@ -21,10 +21,8 @@ abstract class JobEventWithDto : JobEvent() {
     abstract val job: JobDTO
 }
 
-data class JobEventInsert(override val job: JobDTO) : JobEventWithDto()
-data class JobEventDelete(val jobId: Long) : JobEvent()
-data class JobEventUpdate(override val job: JobDTO) : JobEventWithDto()
 data class JobEventPing(val timestamp: LocalDateTime = LocalDateTime.now()) : JobEvent()
 data class JobEventStarted(override val job: JobDTO) : JobEventWithDto()
+data class JobEventScheduled(override val job: JobDTO) : JobEventWithDto()
 data class JobEventCompleted(override val job: JobDTO) : JobEventWithDto()
 data class JobEventCompletedInstantly(override val job: JobDTO) : JobEventWithDto()

@@ -9,7 +9,7 @@ import reactor.core.publisher.DirectProcessor
 import reactor.core.publisher.Flux
 
 @Service
-class DispatcherMonitorService(val jobsRepository: JobsRepository) {
+class DispatcherMonitorService(val jobsRepository: JobsRepository, val jobsTableCacheService: JobsTableCacheService) {
     private val log = LoggerFactory.getLogger(javaClass)
     private val processor: DirectProcessor<JobEvent> = DirectProcessor.create()
     private val events = mutableListOf<JobEvent>()
@@ -27,17 +27,22 @@ class DispatcherMonitorService(val jobsRepository: JobsRepository) {
     @Scheduled(fixedDelayString = "\${dimon.stateRefreshIntervalMs}")
     private fun refreshState() {
         val accumulatedEvents = synchronized(events) {
-            events.toList().also { events.clear() }
-        }.takeIf { it.isNotEmpty() } ?: return
-        val dbState = jobsRepository.findAllByDueToBeforeOrderByDueToDesc().associateBy { it.id }
+            events.toList().let { list ->
+                events.clear()
+                list.filterIsInstance<JobEventWithDto>().takeIf { it.isNotEmpty() }
+            }
+        } ?: return
+        val stateChanges = jobsTableCacheService.updateCache()
+        val eventIds = accumulatedEvents.mapTo(mutableSetOf()) { it.job.id }
+        val scheduled = stateChanges.insertedJobs.filter { it.id !in eventIds }
         accumulatedEvents
-                .filterIsInstance<JobEventWithDto>()
                 .groupBy { it.job.id }
-                .forEach { (jobId, values) -> refreshStateHandleEventsGroup(dbState, jobId, values) }
+                .forEach { (jobId, values) -> refreshStateHandleEventsGroup(jobId, values) }
+        scheduled.forEach { processor.onNext(JobEventScheduled(it.toDTO())) }
     }
 
-    private fun refreshStateHandleEventsGroup(dbState: Map<Long, Job>, jobId: Long, values: List<JobEventWithDto>) {
-        val stillAlive = dbState.containsKey(jobId)
+    private fun refreshStateHandleEventsGroup(jobId: Long, values: List<JobEventWithDto>) {
+        val stillAlive = jobsTableCacheService.lookupCached(jobId) != null
         val starts = values.filterIsInstance<JobEventStarted>()
         val stops = values.filterIsInstance<JobEventCompleted>()
         val otherTypes = values.filter { it !is JobEventCompleted && it !is JobEventStarted }
@@ -58,5 +63,4 @@ class DispatcherMonitorService(val jobsRepository: JobsRepository) {
             else -> processor.onNext(stops.first())
         }
     }
-
 }

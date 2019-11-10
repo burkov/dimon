@@ -5,6 +5,7 @@ import com.github.burkov.dimonserver.repository.JobsRepository
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.util.concurrent.ConcurrentHashMap
+import javax.annotation.PostConstruct
 
 
 data class CacheUpdateResult(
@@ -16,6 +17,11 @@ data class CacheUpdateResult(
 class JobsTableCacheService(val jobsRepository: JobsRepository) {
     private val cache = ConcurrentHashMap<Long, Job>()
     private val log = LoggerFactory.getLogger(javaClass)
+
+    @PostConstruct
+    private fun postConstruct() {
+        updateCache()
+    }
 
     fun lookupCached(id: Long): Job? = cache[id]
 

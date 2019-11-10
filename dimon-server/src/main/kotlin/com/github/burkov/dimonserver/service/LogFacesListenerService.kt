@@ -85,7 +85,7 @@ class LogFacesListenerService(val params: LogFacesClientParams,
                 id = id,
                 workerId = message.substringAfter(" JOB=").substringBefore(", "),
                 params = message.substringAfter(" params=").substringBefore(", "),
-                retry_count = message.substringAfter(" retryCount=").substringBefore(", ").toIntOrNull() ?: -1,
+                retryCount = message.substringAfter(" retryCount=").substringBefore(", ").toIntOrNull() ?: -1,
                 dueTo = LocalDateTime.now()
         ))
     }

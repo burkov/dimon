@@ -7,5 +7,5 @@ data class JobDTO(
         val workerId: String,
         val params: String,
         val dueTo: LocalDateTime,
-        val retry_count: Int
+        val retryCount: Int
 )

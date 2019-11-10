@@ -7,7 +7,6 @@ plugins {
     kotlin("jvm") version "1.3.50"
     kotlin("plugin.spring") version "1.3.50"
     kotlin("plugin.jpa") version "1.3.50"
-//    id("com.google.protobuf") version "0.8.8"
 }
 
 group = "com.github.burkov"
@@ -46,25 +45,6 @@ dependencies {
         exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
     }
 }
-
-//protobuf {
-//    protoc {
-//        artifact = "com.google.protobuf:protoc:3.6.1"
-//    }
-//
-//    plugins {
-//        id("grpc") {
-//            artifact = "io.grpc:protoc-gen-grpc-java:1.15.1"
-//        }
-//    }
-//    generateProtoTasks {
-//        ofSourceSet("main").forEach {
-//            it.plugins {
-//                id("grpc")
-//            }
-//        }
-//    }
-//}
 
 tasks.withType<Test> {
     useJUnitPlatform()

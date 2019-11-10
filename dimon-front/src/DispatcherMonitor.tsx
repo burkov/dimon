@@ -1,5 +1,8 @@
-import React, { Component } from 'react';
+import React, { Component, Fragment } from 'react';
 import './DispatcherMonitor.css';
+import { JobDTO, JobEventType, JobEvent } from './Common'
+import _ from 'lodash'
+
 
 import RSocketWebSocketClient from 'rsocket-websocket-client';
 import {
@@ -8,49 +11,38 @@ import {
   IdentitySerializer,
 } from 'rsocket-core';
 import { ISubscription } from 'rsocket-types'
+import { JobsTable } from './JobsTable';
 
 
 type DispatcherMonitorState = {
-  dataFromServer: Object
+  started: JobDTO[],
+  completed: JobDTO[],
+  scheduled: JobDTO[],
+  now: Date
 }
 
 type DispatcherMonitorProps = {
-
+  showNCompleted: number
 }
 
-enum JobEventType {
-  insert,
-  update,
-  delete,
-  snapshot,
-  tablepoll
-}
-
-interface JobEvent {
-  type: JobEventType
-}
-
-interface JobDTO {
-  id: number,
-  workerId: string,
-  params: string,
-  dueTo: string
-}
-
-interface JobEventInsert extends JobEvent {
-  job: JobDTO
-}
-
-export default class DispatcherMonitor extends Component<{}, DispatcherMonitorState> {
+export default class DispatcherMonitor extends Component<DispatcherMonitorProps, DispatcherMonitorState> {
   private totalEvents: number = 0;
   private totalReconnects: number = 0;
   constructor(props: DispatcherMonitorProps) {
     super(props);
-    this.state = { dataFromServer: {} }
+    this.state = {
+      now: new Date(),
+      started: [],
+      completed: [],
+      scheduled: []
+    }
   }
 
   async componentDidMount() {
     this.connectRSocket();
+    setInterval(() => {
+      this.setState(prevState => ({ ...prevState, now: new Date() }))
+    }, 1000);
   }
 
   private connectRSocket() {
@@ -120,44 +112,57 @@ export default class DispatcherMonitor extends Component<{}, DispatcherMonitorSt
     }, 5000);
   }
 
-  private handleInsert(data: JobEventInsert) {
-    console.log(`${JSON.stringify(data.job)}`);
+  private handleScheduled(job: JobDTO) {
+    this.setState({
+      ...this.state,
+      scheduled: [job, ...this.state.scheduled]
+    });
+  }
+
+  private handleStarted(job: JobDTO) {
+    this.setState({
+      ...this.state,
+      scheduled: this.removeJobById(this.state.scheduled, job.id),
+      started: [job, ...this.state.started]
+    });
+  }
+
+  private handleCompletion(job: JobDTO) {
+    if (_.findIndex(this.state.completed, (e) => e.id === job.id) === -1) {
+      this.setState({
+        ...this.state,
+        scheduled: this.removeJobById(this.state.scheduled, job.id),
+        started: this.removeJobById(this.state.started, job.id),
+        completed: _.take([job, ...this.state.completed], this.props.showNCompleted)
+      });
+    }
+  }
+
+  private removeJobById(jobs: JobDTO[], id: number) {
+    return _.remove(jobs, (e) => e.id === id);
   }
 
   private handleJobEvent(data: JobEvent) {
     const type = JobEventType[data.type];
-    this.setState({
-      dataFromServer: {
-        lastEventType: data.type,
-        totalEvents: this.totalEvents,
-        totalReconnects: this.totalReconnects
-      }
-    })
-    console.log(`${data.type}, total events: ${this.totalEvents}, totalReconnects: ${this.totalReconnects}`);
     switch (+type) {
-      case JobEventType.insert:
-        this.handleInsert(data as JobEventInsert);
-        break;
-      case JobEventType.delete:
-        // console.log(`${totalProcessed} DEL: ${data.jobId}`);
-        break;
-      case JobEventType.update:
-        // console.log(`${totalProcessed} UPD: ${JSON.stringify(data.job)}`);
-        break;
-      case JobEventType.snapshot:
-        // console.log(`SNP: ${data.jobs.length} items`)
-        break;
-      case JobEventType.tablepoll:
-        break;
+      case JobEventType.completed:
+      case JobEventType.completedinstantly:
+        return this.handleCompletion(data.job);
+      case JobEventType.scheduled:
+        return this.handleScheduled(data.job);
+      case JobEventType.started:
+        return this.handleStarted(data.job);
       default:
-        console.error(`Unkown message: ${JSON.stringify(data)}`);
-        break;
+        console.log(`unkonwn event: ${data}`)
     }
+    console.log(`${type}, total events: ${this.totalEvents}, totalReconnects: ${this.totalReconnects}`);
   }
 
   render() {
-    return <div className="App" >
-      {JSON.stringify(this.state.dataFromServer)}
-    </div>;
+    return <Fragment>
+      <JobsTable name='Scheduled' jobs={this.state.scheduled} now={this.state.now} />
+      <JobsTable name='Started' jobs={this.state.started} now={this.state.now} />
+      <JobsTable name='Completed' jobs={this.state.completed} now={this.state.now} />
+    </Fragment>;
   }
 }

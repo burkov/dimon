@@ -15,7 +15,7 @@
     "lodash": "^4.17.15",
     "react": "^16.10.2",
     "react-dom": "^16.10.2",
-    "react-scripts": "3.2.0",
+    "react-scripts": "5.0.1",
     "rsocket-core": "0.0.16",
     "rsocket-websocket-client": "0.0.16",
     "typescript": "3.6.4"
